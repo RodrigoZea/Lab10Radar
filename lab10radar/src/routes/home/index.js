@@ -1,10 +1,17 @@
 import { h } from 'preact';
-import style from './style';
+import style from './style.scss';
+import Dot from '../../components/dot';
 
-const Home = () => (
+const Home = ({ posList, currPosition }) => (
 	<div class={style.home}>
-		<h1>Home</h1>
-		<p>This is the Home component.</p>
+		<div class={style.radar}>
+			<div class={style.sweep} />
+
+		</div>
+		{posList.map(pos => {
+			const coords = { x: pos.x - currPosition.x + (window.innerWidth / 2), y: pos.y - currPosition.y + (window.innerHeight / 2) };
+			return <Dot x={coords.x} y={coords.y} />;
+		})}
 	</div>
 );
 
