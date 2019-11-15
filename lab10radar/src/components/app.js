@@ -8,6 +8,9 @@ import Header from './header';
 import Dot from './dot';
 // Code-splitting is automated for routes
 import Home from '../routes/home';
+import { createApolloFetch } from 'apollo-fetch';
+const uri = 'http://msdeus.site/lab10';
+const apolloFetch = createApolloFetch({ uri });
 
 export default class App extends Component {
 	
@@ -26,11 +29,24 @@ export default class App extends Component {
 
 
 			const success = position => {   // Esta funcion va a ser un callback que va a recibir la posición del dispositivo
-				console.log('success', position);
-				//this.state.currPosition.latitude = position.coords.latitude;
-				//this.state.currPosition.longitude = position.coords.longiude;
-				const coords = { x: position.coords.latitude, y: position.coords.longitude };
-				this.setState({ currPosition: coords });
+				const query = `
+					mutation {
+  						updateUser(name: "Rodrigo Zea", latitude: "${position.coords.latitude}", longitude: "${position.coords.longitude}")
+  						{
+   							name latitude longitude
+  						}
+					}
+				`;
+
+				apolloFetch({ query }) //all apolloFetch arguments are optional
+					.then(result => {
+						console.log('qweiqiw', result.data.updateUser);
+						this.setState({ currPosition: result.data.updateUser });
+						//GraphQL errors and extensions are optional
+					})
+					.catch(error => {
+						//respond to a network error
+					});
 
 				/*
 					Position acá es un objeto con las siguientes propiedades:
@@ -90,17 +106,31 @@ export default class App extends Component {
 		}
 	}
 
+	setGeolocation() {
+		console.log('setGeoloc');
+		const query = `
+			query {
+				allUsers { name latitude longitude }
+			}
+		`;
+		apolloFetch({ query }) //all apolloFetch arguments are optional
+			.then(result => {
+				this.setState({ posList: result.data.allUsers });
+			});
+	}
+
 	constructor(props) {
 		super(props);
 
 		this.state = {
 			currPosition: {},
-			posList: [{ x: 60, y: 80 }, { x: 30, y: -50 }, { x: 23, y: 50 }]
+			posList: []
 		};
 	}
 
 	componentDidMount() {
 		this.getGeolocation();
+		setInterval(this.setGeolocation.bind(this), 1000);
 	}
 
 	render() {
@@ -120,7 +150,6 @@ export default class App extends Component {
 				<Header />
 				<Router onChange={this.handleRoute}>
 					<Home path="/" posList={this.state.posList} currPosition={this.state.currPosition} />
-
 				</Router>
 			</div>
 		);
